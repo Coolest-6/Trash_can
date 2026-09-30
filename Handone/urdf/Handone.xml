@@ -1,0 +1,78 @@
+<mujoco model="Handone">
+  <compiler angle="radian"/>
+  <option timestep="0.0005" solver="Newton" iterations="100" tolerance="1e-10"/>
+
+  <asset>
+    <mesh name="base_link" content_type="model/stl" file="../meshes/base_link.STL"/>
+    <mesh name="bigfinger1_Link" content_type="model/stl" file="../meshes/bigfinger1_Link.STL"/>
+    <mesh name="bigfinger2_Link" content_type="model/stl" file="../meshes/bigfinger2_Link.STL"/>
+    <mesh name="bigfinger3_Link" content_type="model/stl" file="../meshes/bigfinger3_Link.STL"/>
+    <mesh name="bigfinger4_Link" content_type="model/stl" file="../meshes/bigfinger4_Link.STL"/>
+  </asset>
+
+  <worldbody>
+    <body name="base_link">
+      <inertial pos="-0.0029147 -0.0014709 0.045968" mass="0.11298"
+                fullinertia="0.00013587 0.000093228 0.000078129 -1.2416e-06 4.8489e-06 3.314e-06"/>
+      <geom type="mesh" mesh="base_link"/>
+    </body>
+    <body name="bigfinger1_Link" pos="0.01245 -0.0221 0.03675">
+      <inertial pos="0.0035614 -0.0032078 -0.009734" quat="0.904315 -0.129811 -0.0577804 0.402523" mass="0.00099618" diaginertia="4.93594e-08 3.99121e-08 2.44875e-08"/>
+      <joint name="bigfinger1_joint" range="0 0.85" damping="0.05"
+             actuatorfrcrange="-1 1"/>
+      <geom type="mesh" rgba="1 0 0 1" mesh="bigfinger1_Link"/>
+      <!-- Closed-loop hinge axis points, converted from mm to m. -->
+      <site name="bigfinger1_A" pos="0.00861 0.00044 -0.0032" size="0.0005" rgba="1 1 0 1"/>
+      <site name="bigfinger1_B" pos="0.0095 0.00143 -0.0032" size="0.0005" rgba="1 0.5 0 1"/>
+      <body name="bigfinger2_Link" pos="0.014192 -0.0032949 -0.012473" quat="0.660118 0.660121 -0.253462 -0.253461">
+        <inertial pos="0.020339 0.010906 0.0070501" quat="-0.108397 0.698792 0.108548 0.698683" mass="0.047127" diaginertia="8.9757e-06 6.77425e-06 3.20735e-06"/>
+        <joint name="bigfinger2_joint" range="0 0.78" damping="0.01"/>
+        <geom type="mesh" rgba="0 1 0 1" mesh="bigfinger2_Link"/>
+        <body name="bigfinger3_Link" pos="0.037851 0.024498 0.00375">
+          <inertial pos="0.017822 0.0048877 0.0032999" quat="0.383829 0.383964 0.593804 0.593838" mass="0.014431" diaginertia="2.02299e-06 1.8591e-06 6.69981e-07"/>
+          <joint name="bigfinger3_joint" range="0 0.78" damping="0.05"
+                 actuatorfrcrange="-1 1" axis="0 0 1"/>
+          <geom type="mesh" rgba="0 0 1 1" mesh="bigfinger3_Link"/>
+          <site name="thumb_tip" pos="0.03718 0.01251 0.00332"
+                size="0.001" rgba="0 1 1 1"/>
+          <body name="bigfinger4_Link" pos="1.2802e-05 -0.0061 -0.006565">
+            <inertial pos="-0.024432 -0.0050086 0.009865" quat="-0.0713668 0.703496 0.0713668 0.703496" mass="0.00032554" diaginertia="7.2295e-08 7.21546e-08 4.33229e-10"/>
+            <joint name="bigfinger4_joint" range="-1.5 1.5" damping="0.01"
+                   axis="0 0 -1"/>
+            <geom type="mesh" rgba="1 1 1 1" mesh="bigfinger4_Link"/>
+            <site name="bigfinger4_A" pos="-0.04451 -0.00913 0.00378" size="0.0005" rgba="1 1 0 1"/>
+            <site name="bigfinger4_B" pos="-0.04451 -0.00913 0.00245" size="0.0005" rgba="1 0.5 0 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <contact>
+    <!-- These pairs overlap at internal pivots in the exported CAD geometry. -->
+    <exclude body1="base_link" body2="bigfinger1_Link"/>
+    <exclude body1="base_link" body2="bigfinger4_Link"/>
+    <!-- The visual meshes do not interfere in CAD; their convex collision
+         hulls overlap above roughly 35 degrees of finger3 motion. -->
+    <exclude body1="base_link" body2="bigfinger2_Link"/>
+    <exclude body1="bigfinger1_Link" body2="bigfinger4_Link"/>
+    <exclude body1="bigfinger2_Link" body2="bigfinger4_Link"/>
+  </contact>
+
+  <equality>
+    <!-- Two coincident point pairs define the closed-loop revolute axis A-B. -->
+    <connect name="bigfinger_loop_A" site1="bigfinger4_A" site2="bigfinger1_A"
+             active="true" solref="0.001 1" solimp="0.99 0.999 0.0001"/>
+    <connect name="bigfinger_loop_B" site1="bigfinger4_B" site2="bigfinger1_B"
+             active="true" solref="0.001 1" solimp="0.99 0.999 0.0001"/>
+  </equality>
+
+  <actuator>
+    <position name="finger1_motor" joint="bigfinger1_joint" kp="10" kv="0.2"
+              ctrllimited="true" ctrlrange="0 0.78"
+              forcelimited="true" forcerange="-1 1"/>
+    <position name="finger3_motor" joint="bigfinger3_joint" kp="10" kv="0.2"
+              ctrllimited="true" ctrlrange="0 0.77"
+              forcelimited="true" forcerange="-1 1"/>
+  </actuator>
+</mujoco>
